@@ -52,7 +52,7 @@ public class UrlReader {
             // We can now read this URL
             readURL("https://localhost:5001/service2");
 
-            // This one can't be read because the Java default truststore has been 
+            // This one can't be read because the Java default truststore has been
             // changed.
             readURL("https://www.google.com");
 

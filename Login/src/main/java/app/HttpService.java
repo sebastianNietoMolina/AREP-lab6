@@ -2,30 +2,64 @@ package app;
 
 import okhttp3.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HttpService {
-    public OkHttpClient httpClient;
 
     public HttpService() {
-        httpClient = new OkHttpClient();
+        try {
+            File trustStoreFile = new File("keys/trustStoreOtherService");
+            char[] trustStorePassword = "123456".toCharArray();
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(new FileInputStream(trustStoreFile), trustStorePassword);
+            TrustManagerFactory tmf = TrustManagerFactory
+                    .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(trustStore);
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
+            SSLContext.setDefault(sslContext);
+
+        } catch (KeyStoreException ex) {
+            Logger.getLogger(UrlReader.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(UrlReader.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(UrlReader.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(UrlReader.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (CertificateException ex) {
+            Logger.getLogger(UrlReader.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (KeyManagementException ex) {
+            Logger.getLogger(UrlReader.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     public String readURL(String url) throws IOException {
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
-        System.out.println(request);
-        Response response = httpClient.newCall(request).execute();
-        System.out.println(response);
-        return response.body().string();
+        try {
+            URL siteURL = new URL(url);
+            URLConnection urlConnection = siteURL.openConnection();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            String inputLine = "";
+            String out = "";
+            while ((inputLine = reader.readLine()) != null) {
+                out += inputLine;
+            }
+            return out;
+        } catch (IOException x) {
+            System.err.println(x);
+        }
+        return "Can´t read this page";
     }
 }

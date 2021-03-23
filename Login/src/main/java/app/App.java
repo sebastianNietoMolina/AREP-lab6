@@ -4,23 +4,22 @@ import model.User;
 import org.apache.commons.codec.binary.Hex;
 import spark.Request;
 import spark.Response;
-import static spark.Spark.get;
-import static spark.Spark.port;
-import static spark.Spark.post;
-import static spark.Spark.secure;
-
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import static spark.Spark.*;
 
 public class App {
 
     public static User user = new User("user", "8e8725edeaa090c62110e9c7b23a243873d61b36");
+    public static HttpService httpService;
 
     public static void main(String... args){
         //API: secure(keystoreFilePath, keystorePassword, truststoreFilePath, truststorePassword);
         //secure("keys/ecikeystore.p12", "123456", "keys/trustStoreOtherService", "123456");
+        secure("keys/ecikeystore.p12", "123456", "keys/trustStoreOtherService", "123456");
         port(getPort());
+        httpService = new HttpService();
         get("/login", (req, res) -> log(req,res));
     }
 
@@ -28,8 +27,8 @@ public class App {
         String username = req.queryParams("username");
         String password = req.queryParams("password");
         if(username.equals(user.getUserName()) && getHashSHA1Password(password).equals(user.getPassword())){
-            HttpService httpService = new HttpService();
-            String url = "http://localhost:5001/service2";
+            httpService = new HttpService();
+            String url = "https://localhost:5001/service2";
             return httpService.readURL(url);
         }else{
             return "The user or password are incorrect";
